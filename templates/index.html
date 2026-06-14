@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>geno.iafuturecoded</title>
+</head>
+<body>
+    <h1>Dashboard: geno.iafuturecoded</h1>
+    
+    <div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; font-weight: bold;">
+        🌐 Sistema Conectado a Internet | Mercado USD (BTC): $ {{ btc_price }}
+    </div>
+    
+    <br>
+
+    <h2>Mis Objetivos (2029)</h2>
+    <form action="/agregar" method="POST">
+        <input type="text" name="contenido" placeholder="Escribe tu objetivo..." required>
+        <button type="submit">Guardar Objetivo</button>
+    </form>
+    <ul>
+        {% for obj in objetivos %}
+            <li>{{ obj.contenido }}</li>
+        {% endfor %}
+    </ul>
+
+    <hr>
+
+    <h2>Auditoría de 52 Semanas</h2>
+    <form action="/auditar" method="POST">
+        <label>Horas de Código:</label> <input type="number" step="0.1" name="horas_codigo" required>
+        <label>Millas:</label> <input type="number" step="0.1" name="millas_caminadas" required>
+        <label>Videos:</label> <input type="number" name="videos_publicados" required>
+        <label>USD:</label> <input type="number" step="0.01" name="ingresos_usd" required>
+        <button type="submit">Registrar Día</button>
+    </form>
+
+    <hr>
+
+    <h2>Minería de Leads Inteligente Automática (Scraper)</h2>
+    <form action="/minar" method="POST">
+        <input type="text" name="target_url" placeholder="Pega la URL de la empresa o directorio (ej: sitio.com)" style="width: 400px;" required>
+        <button type="submit" style="background-color: #4CAF50; color: white; font-weight: bold;">Lanzar Robot de Extracción</button>
+    </form>
+    <p><small style="color: #555;">El robot inspeccionará el código fuente del sitio, aislará correos electrónicos mediante lógica algorítmica y fabricará los pitches en USD de inmediato.</small></p>
+
+    <br>
+
+    <h2>Generador de Leads Manual (USD)</h2>
+    <form action="/crear_lead" method="POST">
+        <input type="text" name="empresa" placeholder="Nombre de la Empresa" required>
+        <input type="text" name="contacto" placeholder="Nombre del Contacto" required>
+        <input type="email" name="email" placeholder="Email de la Empresa" required>
+        <button type="submit">Generar Prospecto Manual</button>
+    </form>
+
+    <h3>Fábrica de Pitches Activos</h3>
+    {% for ld in leads %}
+        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background-color: #fafafa;">
+            <strong>Empresa:</strong> {{ ld.empresa }} | <strong>Contacto:</strong> {{ ld.contacto }} | <strong>Email:</strong> {{ ld.email }}<br>
+            <pre style="background: #eef; padding: 5px;">{{ ld.pitch_personalizado }}</pre>
+        </div>
+    {% endfor %}
+
+    <hr>
+
+    <h2>Historial de Ejecución</h2>
+    <table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%; text-align: center;">
+        <tr>
+            <th>Fecha</th><th>Horas Código</th><th>Millas</th><th>Videos</th><th>USD</th>
+        </tr>
+        {% for reg in auditorias %}
+        <tr>
+            <td>{{ reg.fecha }}</td><td>{{ reg.horas_codigo }}</td><td>{{ reg.millas_caminadas }}</td><td>{{ reg.videos_publicados }}</td><td>${{ reg.ingresos_usd }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
