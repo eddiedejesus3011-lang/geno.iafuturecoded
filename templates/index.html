@@ -33,7 +33,7 @@
             border: 1px solid var(--border-color);
             border-radius: 8px; padding: 12px;
             font-size: 11px; font-weight: 600;
-            display: flex; justify-content: space-between; margin-bottom: 16px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
             letter-spacing: 0.5px;
         }
         .panel {
@@ -65,8 +65,12 @@
             padding: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+        .btn-logout {
+            background-color: #1e2235; color: var(--muted); border: 1px solid var(--border-color);
+            border-radius: 4px; padding: 4px 8px; text-decoration: none; font-size: 9px; text-transform: uppercase;
+        }
+        .btn-logout:hover { color: var(--red); border-color: var(--red); }
         
-        /* Módulo BTC integrado con la identidad visual */
         .btc-tracker {
             border: 1px solid var(--border-color) !important;
         }
@@ -91,6 +95,7 @@
         <div class="net-bar">
             <span>SYS: <span style="color: var(--green);">ONLINE</span></span>
             <span>MERCADO BTC: <span style="color: var(--btc-gold);">{{ btc_status }}</span></span>
+            <a href="/logout" class="btn-logout">Salir</a>
         </div>
 
         <a href="/ejecutar_purga" class="btn-purga">⚡ Disparar Purga Silenciosa Gmail</a>
@@ -105,9 +110,12 @@
             </div>
 
             <form action="/registrar_compra_btc" method="POST">
-                <div class="form-row" style="display: flex; gap: 8px; margin-bottom: 0;">
-                    <input type="number" step="0.01" name="usd_invertido" placeholder="Monto USD transferido (Ej. 10.00)" required style="flex-grow: 1;">
-                    <button type="submit" class="btn" style="background-color: var(--btc-cyan); color: #000; width: auto; padding: 0 16px;">Registrar</button>
+                <div class="form-row" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 0;">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="number" step="0.01" name="usd_invertido" placeholder="Monto USD (Ej. 13.00)" required style="flex-grow: 1;">
+                        <input type="number" step="0.00000001" name="cantidad_btc" placeholder="BTC exacto (Ej. 0.00019657)" required style="flex-grow: 1;">
+                    </div>
+                    <button type="submit" class="btn" style="background-color: var(--btc-cyan); color: #000; font-weight: 700;">Registrar en Base de Datos</button>
                 </div>
             </form>
         </div>
@@ -168,30 +176,4 @@
         <div class="panel">
             <h2>Generador de Leads Manual (USD)</h2>
             <form action="/crear_lead" method="POST" class="form-row">
-                <div class="form-row"><input type="text" name="empresa" placeholder="Nombre de la Empresa" required></div>
-                <div class="form-row"><input type="text" name="contacto" placeholder="Nombre del Contacto" required></div>
-                <div class="form-row"><input type="email" name="email" placeholder="Email de la Empresa" required></div>
-                <button type="submit" class="btn">Generar Prospecto Manual</button>
-            </form>
-
-            <h3 style="margin-top: 18px;">Fábrica de Pitches Activos</h3>
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Empresa / Lead</th>
-                            <th>Pitch Generado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><span style="color: var(--accent);">Ejemplo Inc.</span><br><small style="color: var(--muted);">info@ejemplo.com</small></td>
-                            <td><pre>Hola, detectamos oportunidades de optimización en tu sistema...</pre></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
+                <div class="form-row"><input type="text" name="empresa
