@@ -3,12 +3,23 @@ import os
 import requests
 
 app = Flask(__name__)
-app.secret_key = "geno_secreto_temporal" # Llave para que funcionen los mensajes flash
+app.secret_key = "geno_secreto_temporal"
+
+# Configuración del búnker financiero de geno.iafuturecoded
+DIRECCION_BITCOIN = "3CSf4...yvsRW"
 
 @app.route('/')
 def dashboard():
-    # Esta ruta hace que al entrar al link seco, cargue tu panel directamente
-    return render_template('index.html')
+    # Simulamos datos de rendimiento de la tesorería del sistema
+    ingresos_usd_estimados = 1250.00
+    porcentaje_acumulacion = 1.00  # 100% destinado a la billetera de respaldo
+    
+    contexto = {
+        "direccion_btc": DIRECCION_BITCOIN,
+        "usd_totales": ingresos_usd_estimados,
+        "btc_simulados": ingresos_usd_estimados / 64101.81  # Cálculo basado en el valor actual
+    }
+    return render_template('index.html', **contexto)
 
 @app.route('/minar', methods=['POST'])
 def minar_leads():
@@ -39,5 +50,5 @@ def minar_leads():
         print(f"[📡 SMS OUT] -> Empresa: {lead['empresa']} | Destino: {lead['telefono']}")
         print(f"    Mensaje: \"{pitch_ingles}\"")
         
-    flash(f"Minería y envío completado en {zona_objetivo}. {len(leads_filtrados)} propuestas enviadas.")
+    flash(f"Minería completada en {zona_objetivo}. {len(leads_filtrados)} propuestas procesadas.")
     return redirect(url_for('dashboard'))
