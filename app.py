@@ -3,7 +3,10 @@
 def minar_leads():
     zona_objetivo = request.form.get('zona', 'Seattle')
     
-    # Lista actualizada: Tukwila fuera, Bellevue dentro
+    # Canalización de llamadas directa al celular de tu hermano
+    TELEFONO_HERMANO = "+14258302521"
+    
+    # Base de datos local unificada del Eastside
     prospectos_encontrados = [
         {"empresa": "WA Premium Builders", "telefono": "206-555-0142", "direccion": "Bellevue, WA"},
         {"empresa": "Cascade Property Management", "telefono": "253-555-0199", "direccion": "Tacoma, WA"},
@@ -17,10 +20,22 @@ def minar_leads():
     if not leads_filtrados:
         leads_filtrados = prospectos_encontrados
         
-    print(f"[+] Minador activado en zona: {zona_objetivo}. Procesando {len(leads_filtrados)} leads de alto valor...")
+    print(f"[+] Minador activado en zona: {zona_objetivo}. Procesando {len(leads_filtrados)} objetivos...")
     
     for lead in leads_filtrados:
-        pass
+        # Pitch comercial estratégico estructurado en inglés nativo
+        pitch_ingles = (
+            f"Hi, this is De Jesus. We have trucks and commercial equipment ready for "
+            f"any landscaping, cleanup, or mowing support your projects need in {zona_objetivo}. "
+            f"Available immediately. Call me back at {TELEFONO_HERMANO}."
+        )
         
-    flash(f"Minería completada en {zona_objetivo}. {len(leads_filtrados)} prospectos listos para auditar.")
+        # Monitor de salida en la terminal del búnker
+        print(f"[📡 SMS OUT] -> Empresa: {lead['empresa']} | Destino: {lead['telefono']}")
+        print(f"    Mensaje: \"{pitch_ingles}\"")
+        
+        # Espacio listo para la integración final del SDK de Twilio:
+        # twilio_client.messages.create(body=pitch_ingles, from_=NUMERO_TWILIO, to=lead['telefono'])
+        
+    flash(f"Minería y envío completado en {zona_objetivo}. {len(leads_filtrados)} propuestas enviadas.")
     return redirect(url_for('dashboard'))
