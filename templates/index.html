@@ -15,6 +15,8 @@
             --muted: #64748b;
             --green: #10b981;
             --red: #ef4444;
+            --btc-gold: #f1c40f;
+            --btc-cyan: #00ffcc;
         }
         *, *::before, *::after { box-sizing: border-box; }
         body {
@@ -64,6 +66,16 @@
             letter-spacing: 0.5px;
         }
         
+        /* Módulo BTC integrado con la identidad visual */
+        .btc-tracker {
+            border: 1px solid var(--border-color) !important;
+        }
+        .btc-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; font-size: 12px;
+        }
+        .btc-grid div { color: var(--muted); text-transform: uppercase; font-size: 10px; font-weight: 600; }
+        .btc-grid span { display: block; font-size: 14px; color: var(--text); font-family: monospace; margin-top: 2px; }
+
         .table-responsive { overflow-x: auto; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
         th { color: var(--muted); padding-bottom: 8px; border-bottom: 1px solid var(--border-color); text-transform: uppercase; font-size: 10px; font-weight: 600; }
@@ -78,10 +90,27 @@
     <div class="container">
         <div class="net-bar">
             <span>SYS: <span style="color: var(--green);">ONLINE</span></span>
-            <span>MERCADO BTC: <span style="color: #f1c40f;">${{ btc_price if btc_price else '---' }}</span></span>
+            <span>MERCADO BTC: <span style="color: var(--btc-gold);">{{ btc_status }}</span></span>
         </div>
 
         <a href="/ejecutar_purga" class="btn-purga">⚡ Disparar Purga Silenciosa Gmail</a>
+
+        <div class="panel btc-tracker">
+            <h2 style="color: var(--btc-cyan);">⚡ Reserva Generacional BTC</h2>
+            <div class="btc-grid">
+                <div>Balance: <span style="color: var(--btc-gold);">{{ balance_crypto.total_btc }}</span></div>
+                <div>Valor en Vivo: <span style="color: var(--green);">{{ balance_crypto.valor_actual }}</span></div>
+                <div>Total Invertido: <span>{{ balance_crypto.invertido }}</span></div>
+                <div>Rendimiento: <span style="color: var(--accent);">{{ balance_crypto.rendimiento }}</span></div>
+            </div>
+
+            <form action="/registrar_compra_btc" method="POST">
+                <div class="form-row" style="display: flex; gap: 8px; margin-bottom: 0;">
+                    <input type="number" step="0.01" name="usd_invertido" placeholder="Monto USD transferido (Ej. 10.00)" required style="flex-grow: 1;">
+                    <button type="submit" class="btn" style="background-color: var(--btc-cyan); color: #000; width: auto; padding: 0 16px;">Registrar</button>
+                </div>
+            </form>
+        </div>
 
         <div class="panel">
             <h2>Mis Objetivos (2029)</h2>
@@ -146,4 +175,23 @@
             </form>
 
             <h3 style="margin-top: 18px;">Fábrica de Pitches Activos</h3>
-            <div class="table
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Empresa / Lead</th>
+                            <th>Pitch Generado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span style="color: var(--accent);">Ejemplo Inc.</span><br><small style="color: var(--muted);">info@ejemplo.com</small></td>
+                            <td><pre>Hola, detectamos oportunidades de optimización en tu sistema...</pre></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -12,7 +12,6 @@ app = Flask(__name__)
 EMAIL_USER = "eddiedejesus3011@gmail.com"
 EMAIL_PASS = "vdpkaklsshscgcxk"
 
-# MODIFICADO: Nombre cambiado para forzar inicialización limpia y romper la caché de Render
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///geno_control.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
@@ -31,47 +30,45 @@ class ListaNegra(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     correo_remitente = db.Column(db.String(255), unique=True, nullable=False)
 
-# ==========================================
-# CRÍTICO: CREACIÓN DE TABLAS EN PRODUCCIÓN
-# Esto se ejecuta siempre, incluso bajo Gunicorn
-# ==========================================
+# NUEVO MÓDULO: Rastreador de Balance de Bitcoin
+class BalanceBTC(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    cantidad_btc = db.Column(db.Float, default=0.0)  # Ej. 0.000155
+    usd_invertido = db.Column(db.Float, default=0.0) # Ej. 10.00
+    fecha = db.Column(db.String(10), nullable=False)
+
+# CRÍTICO: Creación de tablas automáticas
 with app.app_context():
     db.create_all()
 
 # LOGICA DE AUTOMATIZACIÓN (Gmail & BTC)
-def obtener_precio_btc():
+def obtener_precio_btc_float():
     url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
     headers = {'User-Agent': 'Mozilla/5.0'}
     try:
         response = requests.get(url, headers=headers, timeout=5)
         if response.status_code == 200:
-            return f"${response.json()['bitcoin']['usd']:,.2f} USD"
-        return "Línea ocupada"
+            return float(response.json()['bitcoin']['usd'])
+        return 0.0
     except Exception:
-        return "Desconectado"
+        return 0.0
 
 def ejecutar_purga_silenciosa():
     try:
-        print("[+] [geno.iafuturecoded] Iniciando ciclo de limpieza automática...")
         mail = imaplib.IMAP4_SSL("imap.gmail.com", 993)
         mail.login(EMAIL_USER, EMAIL_PASS)
         mail.select("inbox")
-        
-        # Jalar lista negra desde la Base de Datos con contexto de app seguro
         with app.app_context():
             correos_lista_negra = [c.correo_remitente for c in ListaNegra.query.all()]
-        
         for correo in correos_lista_negra:
             status, mensajes = mail.search(None, f'FROM "{correo}"')
             if status == "OK" and mensajes[0]:
                 id_lista = mensajes[0].split()
                 if id_lista:
-                    print(f"[+] [geno.iafuturecoded] Eliminando {len(id_lista)} correos de: {correo}")
                     for num in id_lista:
                         mail.store(num, '+FLAGS', '\\Deleted')
                     mail.expunge()
         mail.logout()
-        print("[+] [geno.iafuturecoded] Purga silenciosa completada con éxito.")
     except Exception as e:
         print(f"[-] Error en purga: {str(e)}")
 
@@ -80,7 +77,23 @@ def ejecutar_purga_silenciosa():
 def dashboard():
     registros = Auditoria.query.order_by(Auditoria.id.desc()).all()
     lista_negra = ListaNegra.query.all()
-    btc_status = obtener_precio_btc()
+    
+    # Cálculos del Balance en Tiempo Real
+    precio_actual = obtener_precio_btc_float()
+    transacciones_btc = BalanceBTC.query.all()
+    
+    total_btc_poseido = sum(t.cantidad_btc for t in transacciones_btc)
+    total_usd_invertido = sum(t.usd_invertido for t in transacciones_btc)
+    valor_actual_usd = total_btc_poseido * precio_actual
+    
+    # Formatear strings para la interfaz
+    btc_status = f"${precio_actual:,.2f} USD" if precio_actual > 0 else "Desconectado"
+    balance_crypto = {
+        'total_btc': f"{total_btc_poseido:.8f} BTC",
+        'invertido': f"${total_usd_invertido:,.2f} USD",
+        'valor_actual': f"${valor_actual_usd:,.2f} USD",
+        'rendimiento': f"{((valor_actual_usd - total_usd_invertido) / total_usd_invertido * 100):+.2f}%" if total_usd_invertido > 0 else "0.00%"
+    }
     
     return render_template(
         'index.html', 
@@ -89,8 +102,29 @@ def dashboard():
         lista_negra=lista_negra, 
         btc_price=btc_status,
         btc_status=btc_status,
+        balance_crypto=balance_crypto,
         objetivos=[] 
     )
+
+# Endpoint para registrar tus compras (desde $1.00 o tus primeros $10.00 USD)
+@app.route('/registrar_compra_btc', methods=['POST'])
+def registrar_compra_btc():
+    usd_gastados = float(request.form.get('usd_invertido', 0) or 0)
+    precio_compra = obtener_precio_btc_float()
+    
+    if usd_gastados > 0 and precio_compra > 0:
+        # Calcular cuánta fracción de Bitcoin compraste con ese dinero
+        fraccion_btc = usd_gastados / precio_compra
+        
+        nueva_compra = BalanceBTC(
+            cantidad_btc=fraccion_btc,
+            usd_invertido=usd_gastados,
+            fecha=time.strftime("%Y-%m-%d")
+        )
+        db.session.add(nueva_compra)
+        db.session.commit()
+        
+    return redirect(url_for('dashboard'))
 
 @app.route('/auditar', methods=['POST'])
 def auditar():
@@ -104,18 +138,6 @@ def auditar():
     )
     db.session.add(nueva_auditoria)
     db.session.commit()
-    return redirect(url_for('dashboard'))
-
-@app.route('/agregar', methods=['POST'])
-def agregar_objetivo():
-    return redirect(url_for('dashboard'))
-
-@app.route('/crear_lead', methods=['POST'])
-def crear_lead():
-    return redirect(url_for('dashboard'))
-
-@app.route('/minar', methods=['POST'])
-def minar_leads():
     return redirect(url_for('dashboard'))
 
 @app.route('/ejecutar_purga')
