@@ -2,78 +2,148 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>geno.iafuturecoded</title>
+    <style>
+        :root {
+            --bg-dark: #07080b;
+            --panel-bg: #10121a;
+            --input-bg: #030406;
+            --border-color: #1b1f2d;
+            --accent: #6366f1;
+            --text: #f8fafc;
+            --muted: #64748b;
+            --green: #10b981;
+            --red: #ef4444;
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0; padding: 12px;
+            line-height: 1.4;
+        }
+        .container { max-width: 540px; margin: 0 auto; }
+        
+        .net-bar {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 12px;
+            font-size: 11px; font-weight: 600;
+            display: flex; justify-content: space-between; margin-bottom: 16px;
+            letter-spacing: 0.5px;
+        }
+        .panel {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 18px; margin-bottom: 14px;
+        }
+        h2 { font-size: 12px; text-transform: uppercase; color: var(--muted); margin: 0 0 14px 0; letter-spacing: 0.8px; font-weight: 700; }
+        h3 { font-size: 11px; text-transform: uppercase; color: var(--text); margin: 10px 0 8px 0; }
+        
+        .form-row { margin-bottom: 12px; }
+        label { display: block; font-size: 10px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; }
+        
+        input, textarea {
+            background-color: var(--input-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; color: var(--text); padding: 10px 12px; font-size: 14px; width: 100%;
+            font-family: inherit;
+        }
+        input:focus, textarea:focus { border-color: var(--accent); outline: none; }
+        
+        .btn {
+            background-color: var(--accent); color: white; border: none; border-radius: 6px;
+            padding: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; width: 100%; cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+        .btn-purga { 
+            background-color: var(--red); margin-bottom: 14px; text-decoration: none; 
+            display: block; text-align: center; color: white; border-radius: 6px; 
+            padding: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table-responsive { overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
+        th { color: var(--muted); padding-bottom: 8px; border-bottom: 1px solid var(--border-color); text-transform: uppercase; font-size: 10px; font-weight: 600; }
+        td { padding: 10px 4px; border-bottom: 1px solid #141722; vertical-align: top; }
+        
+        pre { margin: 0; font-family: inherit; background: #050609; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); color: #cbd5e1; white-space: pre-wrap; }
+        ul { margin: 0; padding-left: 18px; color: var(--text); font-size: 14px; }
+        li { margin-bottom: 4px; }
+    </style>
 </head>
 <body>
-    <h1>Dashboard: geno.iafuturecoded</h1>
-    
-    <div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; font-weight: bold;">
-        🌐 Sistema Conectado a Internet | Mercado USD (BTC): $ {{ btc_price }}
-    </div>
-    
-    <br>
-
-    <h2>Mis Objetivos (2029)</h2>
-    <form action="/agregar" method="POST">
-        <input type="text" name="contenido" placeholder="Escribe tu objetivo..." required>
-        <button type="submit">Guardar Objetivo</button>
-    </form>
-    <ul>
-        {% for obj in objetivos %}
-            <li>{{ obj.contenido }}</li>
-        {% endfor %}
-    </ul>
-
-    <hr>
-
-    <h2>Auditoría de 52 Semanas</h2>
-    <form action="/auditar" method="POST">
-        <label>Horas de Código:</label> <input type="number" step="0.1" name="horas_codigo" required>
-        <label>Millas:</label> <input type="number" step="0.1" name="millas_caminadas" required>
-        <label>Videos:</label> <input type="number" name="videos_publicados" required>
-        <label>USD:</label> <input type="number" step="0.01" name="ingresos_usd" required>
-        <button type="submit">Registrar Día</button>
-    </form>
-
-    <hr>
-
-    <h2>Minería de Leads Inteligente Automática (Scraper)</h2>
-    <form action="/minar" method="POST">
-        <input type="text" name="target_url" placeholder="Pega la URL de la empresa o directorio (ej: sitio.com)" style="width: 400px;" required>
-        <button type="submit" style="background-color: #4CAF50; color: white; font-weight: bold;">Lanzar Robot de Extracción</button>
-    </form>
-    <p><small style="color: #555;">El robot inspeccionará el código fuente del sitio, aislará correos electrónicos mediante lógica algorítmica y fabricará los pitches en USD de inmediato.</small></p>
-
-    <br>
-
-    <h2>Generador de Leads Manual (USD)</h2>
-    <form action="/crear_lead" method="POST">
-        <input type="text" name="empresa" placeholder="Nombre de la Empresa" required>
-        <input type="text" name="contacto" placeholder="Nombre del Contacto" required>
-        <input type="email" name="email" placeholder="Email de la Empresa" required>
-        <button type="submit">Generar Prospecto Manual</button>
-    </form>
-
-    <h3>Fábrica de Pitches Activos</h3>
-    {% for ld in leads %}
-        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; background-color: #fafafa;">
-            <strong>Empresa:</strong> {{ ld.empresa }} | <strong>Contacto:</strong> {{ ld.contacto }} | <strong>Email:</strong> {{ ld.email }}<br>
-            <pre style="background: #eef; padding: 5px;">{{ ld.pitch_personalizado }}</pre>
+    <div class="container">
+        <div class="net-bar">
+            <span>SYS: <span style="color: var(--green);">ONLINE</span></span>
+            <span>MERCADO BTC: <span style="color: #f1c40f;">${{ btc_price if btc_price else '---' }}</span></span>
         </div>
-    {% endfor %}
 
-    <hr>
+        <a href="/ejecutar_purga" class="btn-purga">⚡ Disparar Purga Silenciosa Gmail</a>
 
-    <h2>Historial de Ejecución</h2>
-    <table border="1" cellpadding="8" style="border-collapse: collapse; width: 100%; text-align: center;">
-        <tr>
-            <th>Fecha</th><th>Horas Código</th><th>Millas</th><th>Videos</th><th>USD</th>
-        </tr>
-        {% for reg in auditorias %}
-        <tr>
-            <td>{{ reg.fecha }}</td><td>{{ reg.horas_codigo }}</td><td>{{ reg.millas_caminadas }}</td><td>{{ reg.videos_publicados }}</td><td>${{ reg.ingresos_usd }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-</body>
-</html>
+        <div class="panel">
+            <h2>Mis Objetivos (2029)</h2>
+            <form action="/agregar" method="POST" class="form-row">
+                <div class="form-row">
+                    <input type="text" name="contenido" placeholder="Escribe tu objetivo táctico..." required>
+                </div>
+                <button type="submit" class="btn">Guardar Objetivo</button>
+            </form>
+            <div style="margin-top: 14px;">
+                <ul>
+                    {% for obj in objetivos %}
+                        <li>{{ obj.contenido }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Auditoría de 52 Semanas</h2>
+            <form action="/auditar" method="POST">
+                <div class="form-row">
+                    <label>Horas de Código:</label>
+                    <input type="number" step="0.1" name="horas_codigo" required value="0">
+                </div>
+                <div class="form-row">
+                    <label>Millas Recorridas:</label>
+                    <input type="number" step="0.1" name="millas" required value="0">
+                </div>
+                <div class="form-row">
+                    <label>Videos Producidos:</label>
+                    <input type="number" name="videos" required value="0">
+                </div>
+                <div class="form-row">
+                    <label>Capital Generado (USD):</label>
+                    <input type="number" step="0.01" name="usd" required value="0">
+                </div>
+                <button type="submit" class="btn">Registrar Día</button>
+            </form>
+        </div>
+
+        <div class="panel">
+            <h2>Minería de Leads Inteligente (Scraper)</h2>
+            <form action="/minar" method="POST">
+                <div class="form-row">
+                    <input type="text" name="target_url" placeholder="Pega la URL del directorio (ej: sitio.com)" required>
+                </div>
+                <button type="submit" class="btn" style="background-color: var(--green);">Lanzar Robot de Extracción</button>
+            </form>
+            <p style="margin: 8px 0 0 0; font-size: 10px; color: var(--muted);">
+                El robot inspeccionará el código fuente del sitio, aislará correos electrónicos mediante lógica algorítmica y fabricará los pitches en USD de inmediato.
+            </p>
+        </div>
+
+        <div class="panel">
+            <h2>Generador de Leads Manual (USD)</h2>
+            <form action="/crear_lead" method="POST" class="form-row">
+                <div class="form-row"><input type="text" name="empresa" placeholder="Nombre de la Empresa" required></div>
+                <div class="form-row"><input type="text" name="contacto" placeholder="Nombre del Contacto" required></div>
+                <div class="form-row"><input type="email" name="email" placeholder="Email de la Empresa" required></div>
+                <button type="submit" class="btn">Generar Prospecto Manual</button>
+            </form>
+
+            <h3 style="margin-top: 18px;">Fábrica de Pitches Activos</h3>
+            <div class="table
