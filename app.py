@@ -3,6 +3,7 @@ import requests
 import imaplib
 import threading
 import time
+from functools import wraps  # <-- SOLUCIÓN AL FALLO CRÍTICO DE IMPORTACIÓN
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -45,17 +46,16 @@ class BalanceBTC(db.Model):
     usd_invertido = db.Column(db.Float, default=0.0) 
     fecha = db.Column(db.String(10), nullable=False)
 
-# CRÍTICO: Creación de tablas automáticas y usuario maestro
+# CREACIÓN CONTROLADA DE TABLAS
 with app.app_context():
     db.create_all()
-    # Creamos tu usuario de operador único si no existe
     if not Usuario.query.filter_by(username='eddie').first():
         hashed_password = generate_password_hash('Geno2029!', method='pbkdf2:sha256')
         usuario_maestro = Usuario(username='eddie', password_hash=hashed_password)
         db.session.add(usuario_maestro)
         db.session.commit()
 
-# LOGICA DE AUTOMATIZACIÓN (Gmail & BTC)
+# LÓGICA DE AUTOMATIZACIÓN (Gmail & BTC)
 def obtener_precio_btc_float():
     url = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd"
     headers = {'User-Agent': 'Mozilla/5.0'}
@@ -86,18 +86,16 @@ def ejecutar_purga_silenciosa():
     except Exception as e:
         print(f"[-] Error en purga: {str(e)}")
 
-# DECORADOR CASERO DE PROTECCIÓN DE RUTAS
+# DECORADOR INTEGRADO Y SEGURO
 def login_requerido(f):
-    from functools import wraps
     @wraps(f)
     def funcion_decorada(*args, **kwargs):
         if 'usuario' not in session:
-            flash('Acceso restringido. Por favor inicia sesión.', 'danger')
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return funcion_decorada
 
-# RUTAS DE AUTENTICACIÓN
+# RUTAS DE ACCESO RESTRINGIDO
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -107,27 +105,37 @@ def login():
         user = Usuario.query.filter_by(username=username).first()
         if user and check_password_hash(user.password_hash, password):
             session['usuario'] = user.username
-            session.permanent = True # La sesión persiste en el navegador
+            session.permanent = True
             return redirect(url_for('dashboard'))
         else:
-            flash('Usuario o contraseña incorrectos.', 'danger')
+            return "<h3>Acceso denegado: Credenciales Erróneas.</h3>", 401
             
-    return render_template('login.html')
+    # Formulario de emergencia directo si no encuentra la plantilla independiente
+    return '''
+        <body style="background:#07080b; color:white; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">
+            <form method="POST" style="background:#10121a; color:white; padding:30px; max-width:320px; width:100%; border-radius:12px; border:1px solid #1b1f2d;">
+                <h4 style="text-align:center; color:#64748b; margin-top:0;">🔐 GENO_CONTROL PANEL</h4>
+                <label style="font-size:10px; color:#64748b; display:block; margin-bottom:4px;">USUARIO</label>
+                <input type="text" name="username" placeholder="eddie" required style="width:100%; padding:10px; background:#030406; border:1px solid #1b1f2d; color:white; margin-bottom:15px; border-radius:6px;">
+                <label style="font-size:10px; color:#64748b; display:block; margin-bottom:4px;">CONTRASEÑA</label>
+                <input type="password" name="password" placeholder="••••••••" required style="width:100%; padding:10px; background:#030406; border:1px solid #1b1f2d; color:white; margin-bottom:20px; border-radius:6px;">
+                <button type="submit" style="width:100%; background:#6366f1; color:white; border:none; padding:12px; font-weight:bold; border-radius:6px; cursor:pointer;">CONECTAR SISTEMA</button>
+            </form>
+        </body>
+    '''
 
 @app.route('/logout')
 def logout():
     session.pop('usuario', None)
-    flash('Sesión cerrada correctamente.', 'success')
     return redirect(url_for('login'))
 
-# RUTAS DEL DASHBOARD INTERACTIVO (TODAS PROTEGIDAS)
+# DASHBOARD CENTRAL PROTEGIDO
 @app.route('/', methods=['GET', 'POST'])
 @login_requerido
 def dashboard():
     registros = Auditoria.query.order_by(Auditoria.id.desc()).all()
     lista_negra = ListaNegra.query.all()
     
-    # Cálculos del Balance en Tiempo Real
     precio_actual = obtener_precio_btc_float()
     transacciones_btc = BalanceBTC.query.all()
     
@@ -135,7 +143,6 @@ def dashboard():
     total_usd_invertido = sum(t.usd_invertido for t in transacciones_btc)
     valor_actual_usd = total_btc_poseido * precio_actual
     
-    # Formatear strings para la interfaz
     btc_status = f"${precio_actual:,.2f} USD" if precio_actual > 0 else "Desconectado"
     balance_crypto = {
         'total_btc': f"{total_btc_poseido:.8f} BTC",
@@ -159,19 +166,16 @@ def dashboard():
 @login_requerido
 def registrar_compra_btc():
     usd_gastados = float(request.form.get('usd_invertido', 0) or 0)
-    precio_compra = obtener_precio_btc_float()
+    cantidad_btc_real = float(request.form.get('cantidad_btc', 0) or 0)
     
-    if usd_gastados > 0 and precio_compra > 0:
-        fraccion_btc = usd_gastados / precio_compra
-        
+    if usd_gastados > 0 and cantidad_btc_real > 0:
         nueva_compra = BalanceBTC(
-            cantidad_btc=fraccion_btc,
+            cantidad_btc=cantidad_btc_real,
             usd_invertido=usd_gastados,
             fecha=time.strftime("%Y-%m-%d")
         )
         db.session.add(nueva_compra)
         db.session.commit()
-        
     return redirect(url_for('dashboard'))
 
 @app.route('/auditar', methods=['POST'])
