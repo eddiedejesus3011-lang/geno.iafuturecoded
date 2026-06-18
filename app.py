@@ -12,8 +12,8 @@ app = Flask(__name__)
 EMAIL_USER = "eddiedejesus3011@gmail.com"
 EMAIL_PASS = "vdpkaklsshscgcxk"
 
-# Configuración de base de datos persistente (Render o SQLite local de respaldo)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///sistema.db')
+# MODIFICADO: Nombre cambiado para forzar inicialización limpia y romper la caché de Render
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///geno_control.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -78,13 +78,10 @@ def ejecutar_purga_silenciosa():
 # RUTAS DEL DASHBOARD INTERACTIVO
 @app.route('/', methods=['GET', 'POST'])
 def dashboard():
-    # Nota: Tu index.html usa rutas específicas como /auditar o /agregar.
-    # Esta raíz se mantiene para procesar cargas directas si es necesario.
     registros = Auditoria.query.order_by(Auditoria.id.desc()).all()
     lista_negra = ListaNegra.query.all()
     btc_status = obtener_precio_btc()
     
-    # IMPORTANTE: Mapeamos variables para que tu HTML nuevo no falle (registros e historial)
     return render_template(
         'index.html', 
         registros=registros, 
@@ -92,7 +89,7 @@ def dashboard():
         lista_negra=lista_negra, 
         btc_price=btc_status,
         btc_status=btc_status,
-        objetivos=[] # Mapeo de respaldo para evitar conflictos con Jinja
+        objetivos=[] 
     )
 
 @app.route('/auditar', methods=['POST'])
@@ -111,17 +108,14 @@ def auditar():
 
 @app.route('/agregar', methods=['POST'])
 def agregar_objetivo():
-    # Lógica de respaldo para interceptar la caja de objetivos de tu HTML viejo
     return redirect(url_for('dashboard'))
 
 @app.route('/crear_lead', methods=['POST'])
 def crear_lead():
-    # Intercepta el formulario manual del scraper
     return redirect(url_for('dashboard'))
 
 @app.route('/minar', methods=['POST'])
 def minar_leads():
-    # Intercepta el disparador del robot scraper
     return redirect(url_for('dashboard'))
 
 @app.route('/ejecutar_purga')
