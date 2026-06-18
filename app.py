@@ -3,14 +3,12 @@ import requests
 import imaplib
 import threading
 import time
-from functools import wraps  # <-- SOLUCIÓN AL FALLO CRÍTICO DE IMPORTACIÓN
+from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-
-# LLAVE SECRETA PARA MANEJAR SESIONES SEGURAS
 app.secret_key = os.environ.get('SECRET_KEY', 'geno_secret_key_restringida_2026')
 
 # CONFIGURACIÓN CENTRALIZADA - GENO.IAFUTURECODED
@@ -108,16 +106,13 @@ def login():
             session.permanent = True
             return redirect(url_for('dashboard'))
         else:
-            return "<h3>Acceso denegado: Credenciales Erróneas.</h3>", 401
+            return "<h3>Acceso denegado.</h3>", 401
             
-    # Formulario de emergencia directo si no encuentra la plantilla independiente
     return '''
         <body style="background:#07080b; color:white; font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;">
             <form method="POST" style="background:#10121a; color:white; padding:30px; max-width:320px; width:100%; border-radius:12px; border:1px solid #1b1f2d;">
                 <h4 style="text-align:center; color:#64748b; margin-top:0;">🔐 GENO_CONTROL PANEL</h4>
-                <label style="font-size:10px; color:#64748b; display:block; margin-bottom:4px;">USUARIO</label>
                 <input type="text" name="username" placeholder="eddie" required style="width:100%; padding:10px; background:#030406; border:1px solid #1b1f2d; color:white; margin-bottom:15px; border-radius:6px;">
-                <label style="font-size:10px; color:#64748b; display:block; margin-bottom:4px;">CONTRASEÑA</label>
                 <input type="password" name="password" placeholder="••••••••" required style="width:100%; padding:10px; background:#030406; border:1px solid #1b1f2d; color:white; margin-bottom:20px; border-radius:6px;">
                 <button type="submit" style="width:100%; background:#6366f1; color:white; border:none; padding:12px; font-weight:bold; border-radius:6px; cursor:pointer;">CONECTAR SISTEMA</button>
             </form>
@@ -182,7 +177,7 @@ def registrar_compra_btc():
 @login_requerido
 def auditar():
     nueva_auditoria = Auditoria(
-        fecha=request.form.get('fecha'),
+        fecha=time.strftime("%Y-%m-%d"),
         horas_codigo=float(request.form.get('horas_codigo', 0) or 0),
         millas=float(request.form.get('millas', 0) or 0),
         videos=int(request.form.get('videos', 0) or 0),
@@ -198,6 +193,27 @@ def auditar():
 def purga_manual():
     hilo = threading.Thread(target=ejecutar_purga_silenciosa)
     hilo.start()
+    return redirect(url_for('dashboard'))
+
+# ==========================================
+# RUTAS SOPORTE PARA INTERFAZ INDEX (PREVIENEN CRASH)
+# ==========================================
+@app.route('/agregar', methods=['POST'])
+@login_requerido
+def agregar_objetivo():
+    # Placeholder táctico para evitar 404/500 al enviar el formulario
+    return redirect(url_for('dashboard'))
+
+@app.route('/minar', methods=['POST'])
+@login_requerido
+def minar_leads():
+    # Placeholder táctico para el Scraper
+    return redirect(url_for('dashboard'))
+
+@app.route('/crear_lead', methods=['POST'])
+@login_requerido
+def crear_lead():
+    # Placeholder táctico para Prospectos manuales
     return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
