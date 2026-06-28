@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import os
+import sys
 
 app = Flask(__name__)
 
@@ -52,15 +53,23 @@ def obtener_finanzas():
     res = cursor.fetchone()
     conn.close()
     if res:
-        # Mantiene exactamente el diccionario que tu HTML espera recibir
         return {'btc': f"{res[0]:.6f}", 'usd': f"{res[1]:,.2f}"}
     return {'btc': "0.000000", 'usd': "0.00"}
 
+# --- RUTA PRINCIPAL CON RASTREO DE ERRORES INTELIGENTE ---
 @app.route('/', methods=['GET', 'POST'])
 def dashboard():
-    crypto_data = obtener_finanzas()
-    # Mapea 'crypto' exactamente como lo tenías para index.html o login.html
-    return render_template('login.html', crypto=crypto_data)
+    try:
+        crypto_data = obtener_finanzas()
+        # Intentamos cargar index.html primero
+        return render_template('index.html', crypto=crypto_data)
+    except Exception as e:
+        # Si falla, intentamos con login.html por si acaso
+        try:
+            return render_template('login.html', crypto=crypto_data)
+        except Exception as e_secundario:
+            # Si ambos fallan, te escupimos el error real en la cara para saber qué pasa
+            return f"<h1>Error de Diagnóstico en Geno:</h1><p>index.html falló porque: {str(e)}</p><p>login.html falló porque: {str(e_secundario)}</p>"
 
 @app.route('/registrar_ingreso', methods=['POST'])
 def registrar_ingreso():
