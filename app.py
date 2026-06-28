@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import os
 import sys
 import json
-import pg8000  # Cambiamos la librería problemática por pg8000 nativo
+import pg8000  # Conector nativo para PostgreSQL
 
 app = Flask(__name__)
 
@@ -13,7 +13,6 @@ def obtener_conexion():
     DATABASE_URL = os.environ.get('DATABASE_URL')
     if DATABASE_URL:
         try:
-            # Limpiar el prefijo si Render lo envía con postgresql://
             url = DATABASE_URL.replace("postgres://", "").replace("postgresql://", "")
             user_pass, host_db = url.split("@")
             user, password = user_pass.split(":")
@@ -25,13 +24,12 @@ def obtener_conexion():
         except Exception as e:
             raise Exception(f"Error al procesar la DATABASE_URL: {e}")
     else:
-        raise Exception("Falta configurar la URL de la base de datos PostgreSQL en las variables de entorno.")
+        raise Exception("Falta configurar la URL de la base de datos PostgreSQL.")
 
 def init_geno_system():
     conn = obtener_conexion()
     cursor = conn.cursor()
     
-    # Crear tablas con sintaxis PostgreSQL corregida
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS notas_conexion (
             id SERIAL PRIMARY KEY,
@@ -49,7 +47,6 @@ def init_geno_system():
         )
     ''')
     
-    # Validamos la existencia del registro inicial de tesorería
     cursor.execute("SELECT COUNT(*) FROM finanzas_sistema")
     if cursor.fetchone()[0] == 0:
         cursor.execute("INSERT INTO finanzas_sistema (id, btc_balance, usd_balance) VALUES (1, 0.000000, 0.00)")
@@ -84,10 +81,9 @@ def registrar_ingreso():
         
         conn = obtener_conexion()
         cursor = conn.cursor()
-        # pg8000 usa marcadores de posición posicionales (:1, :2) en lugar de %s
         cursor.execute("""
             UPDATE finanzas_sistema 
-            SET btc_balance = btc_balance + :1, usd_balance = usd_balance + :2 
+            SET btc_balance = btc_balance + %s, usd_balance = usd_balance + %s 
             WHERE id = 1
         """, (monto_btc, monto_usd))
         conn.commit()
@@ -137,10 +133,9 @@ def preguntar_geno():
         if monto_usd > 0 or monto_btc > 0:
             conn = obtener_conexion()
             cursor = conn.cursor()
-            # Adaptación de marcadores (:1, :2) para pg8000
             cursor.execute("""
                 UPDATE finanzas_sistema 
-                SET btc_balance = btc_balance + :1, usd_balance = usd_balance + :2 
+                SET btc_balance = btc_balance + %s, usd_balance = usd_balance + %s 
                 WHERE id = 1
             """, (monto_btc, monto_usd))
             conn.commit()
@@ -151,7 +146,6 @@ def preguntar_geno():
     except Exception as e:
         return jsonify({"respuesta": f"Error: {str(e)}"}), 500
 
-# Inicializar Base de Datos en nube al arrancar el contenedor
 try:
     init_geno_system()
 except Exception as e:
