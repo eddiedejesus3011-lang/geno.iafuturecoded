@@ -1,12 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import os
 import sys
+import openai  # Asegúrate de tener 'openai' en tu archivo requirements.txt
 
 app = Flask(__name__)
 
 app.secret_key = os.environ.get('GENO_SYSTEM_SECRET', 'geno_secret_key_pro_2026')
+
+# Configuración de la API Key de OpenAI
+openai.api_key = os.environ.get("AI_SECRET_KEY")
 
 # Parche de permisos de escritura para Render
 if os.environ.get('RENDER'):
@@ -73,19 +77,53 @@ def dashboard():
 
 @app.route('/registrar_ingreso', methods=['POST'])
 def registrar_ingreso():
-    monto_usd = float(request.form.get('monto_usd', 0) or 0)
-    monto_btc = float(request.form.get('monto_btc', 0) or 0)
-    
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("""
-        UPDATE finanzas_sistema 
-        SET btc_balance = btc_balance + ?, usd_balance = usd_balance + ? 
-        WHERE id = 1
-    """, (monto_btc, monto_usd))
-    conn.commit()
-    conn.close()
+    try:
+        monto_usd = float(request.form.get('monto_usd', 0) or 0)
+        monto_btc = float(request.form.get('monto_btc', 0) or 0)
+        
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE finanzas_sistema 
+            SET btc_balance = btc_balance + ?, usd_balance = usd_balance + ? 
+            WHERE id = 1
+        """, (monto_btc, monto_usd))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Error al registrar ingreso manual: {e}")
+        
     return redirect(url_for('dashboard'))
+
+# --- NUEVA RUTA: INTERFAZ CON EL CEREBRO DE LA AI ---
+@app.route('/preguntar_geno', methods=['POST'])
+def preguntar_geno():
+    user_message = request.form.get('mensaje')
+    if not user_message:
+        return jsonify({"respuesta": "No enviaste ningún mensaje."}), 400
+        
+    if not openai.api_key:
+        return jsonify({"respuesta": "Error: La variable de entorno AI_SECRET_KEY no está configurada."}), 500
+    
+    try:
+        # La AI procesa tu orden (Ej: "Geno, gané 100 dólares en un servicio")
+        response = openai.ChatCompletion.create(
+            model="gpt-4o-mini", 
+            messages=[
+                {"role": "system", "content": "Eres Geno, el cerebro del sistema financiero de iafuturecoded. Tu trabajo es extraer el 'concepto' y el 'monto' de los mensajes del usuario para guardarlos en la base de datos."},
+                {"role": "user", "content": user_message}
+            ]
+        )
+        
+        respuesta_ai = response.choices[0].message.content
+        
+        # Próximo paso: Aquí programarás el parser para inyectar 
+        # automáticamente los montos detectados por la IA en tu SQLite.
+        
+        return jsonify({"respuesta": respuesta_ai})
+        
+    except Exception as e:
+        return jsonify({"respuesta": f"Ocurrió un error al conectar con la API de AI: {str(e)}"}), 500
 
 # Asegurar la creación de la BD en producción
 init_geno_system(reset=False)
