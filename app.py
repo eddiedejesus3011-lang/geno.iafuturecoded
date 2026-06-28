@@ -6,7 +6,13 @@ import os
 app = Flask(__name__)
 
 app.secret_key = os.environ.get('GENO_SYSTEM_SECRET', 'geno_secret_key_pro_2026')
-DB_PATH = os.path.join(os.path.dirname(__file__), 'database.db')
+
+# --- PARCHE DE SEGURIDAD PARA RENDER ---
+# Si detecta que está en Render, usa la carpeta /tmp donde sí hay permisos de escritura
+if os.environ.get('RENDER'):
+    DB_PATH = '/tmp/database.db'
+else:
+    DB_PATH = os.path.join(os.path.dirname(__file__), 'database.db')
 
 CONTRASEÑA_REAL = os.environ.get('GENO_MASTER_PASSWORD', '1234')
 CONTRASEÑA_MAESTRA_HASH = generate_password_hash(CONTRASEÑA_REAL)
@@ -54,14 +60,15 @@ def obtener_finanzas():
         return {'btc': f"{res[0]:.6f}", 'usd': f"{res[1]:,.2f}"}
     return {'btc': "0.000000", 'usd': "0.00"}
 
+# --- RUTA RAÍZ CORREGIDA ---
+# Apunta a 'login.html' que es el archivo real que tienes en tu carpeta templates
 @app.route('/', methods=['GET', 'POST'])
 def dashboard():
     crypto_data = obtener_finanzas()
-    return render_template('index.html', crypto=crypto_data)
+    return render_template('login.html', crypto=crypto_data)
 
 @app.route('/registrar_ingreso', methods=['POST'])
 def registrar_ingreso():
-    concepto = request.form.get('concepto')
     monto_usd = float(request.form.get('monto_usd', 0) or 0)
     monto_btc = float(request.form.get('monto_btc', 0) or 0)
     
@@ -78,8 +85,10 @@ def registrar_ingreso():
     conn.close()
     return redirect(url_for('dashboard'))
 
+# Inicializar la base de datos fuera del __main__ para que Gunicorn (Render) también la cree
+init_geno_system(reset=False)
+
 if __name__ == '__main__':
-    # reset=True borra los datos viejos una sola vez al arrancar
+    # Solo resetea localmente si ejecutas directamente con python app.py
     init_geno_system(reset=True)
-    # Mantiene la misma IP y puerto activos para tus teléfonos
     app.run(host='0.0.0.0', port=5000, debug=True)
