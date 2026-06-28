@@ -5,163 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>geno.iafuturecoded | Control Hub</title>
     <style>
-        body {
-            background-color: #0b0b0c;
-            color: #e4e4e7;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            max-width: 450px;
-            width: 100%;
-            background: #121214;
-            border: 1px solid #27272a;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-        }
-        h2 {
-            color: #f39c12;
-            margin-top: 0;
-            font-size: 22px;
-            letter-spacing: 0.5px;
-            border-bottom: 1px solid #27272a;
-            padding-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .logout-btn {
-            font-size: 12px;
-            color: #ef4444;
-            text-decoration: none;
-            border: 1px solid #ef4444;
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
-        .section-title {
-            font-size: 14px;
-            text-transform: uppercase;
-            color: #a1a1aa;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
-            margin-top: 24px;
-        }
-        /* Bloque de Tesorería Bitcoin */
-        .wallet-card {
-            background: linear-gradient(135deg, #1e1e24 0%, #151518 100%);
-            border: 1px solid #f39c12;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 20px;
-        }
-        .balance-usd {
-            font-size: 28px;
-            font-weight: bold;
-            color: #fff;
-            margin: 4px 0;
-        }
-        .balance-btc {
-            font-size: 16px;
-            color: #f39c12;
-            font-weight: 500;
-            margin-bottom: 12px;
-        }
-        .wallet-address {
-            background: #0b0b0c;
-            padding: 8px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 11px;
-            color: #a1a1aa;
-            word-break: break-all;
-            border: 1px solid #27272a;
-        }
-        /* Formulario de Minería */
-        label {
-            display: block;
-            font-size: 14px;
-            margin-bottom: 8px;
-            color: #e4e4e7;
-        }
-        select {
-            width: 100%;
-            padding: 12px;
-            background: #1e1e24;
-            border: 1px solid #27272a;
-            color: #fff;
-            border-radius: 6px;
-            font-size: 16px;
-            margin-bottom: 16px;
-        }
-        button.btn-mine {
-            width: 100%;
-            padding: 14px;
-            background: #f39c12;
-            color: #000;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        button.btn-mine:hover {
-            background: #d35400;
-        }
-        .flash-messages {
-            background: #10b981;
-            color: #000;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 16px;
-            font-size: 14px;
-            font-weight: 500;
-        }
+        body { background-color: #0b0b0c; color: #e4e4e7; font-family: sans-serif; padding: 20px; display: flex; justify-content: center; }
+        .container { max-width: 450px; width: 100%; background: #121214; border: 1px solid #27272a; border-radius: 12px; padding: 24px; }
+        h2 { color: #f39c12; border-bottom: 1px solid #27272a; padding-bottom: 12px; margin-top: 0; }
+        .section-title { font-size: 14px; text-transform: uppercase; color: #a1a1aa; margin-top: 24px; margin-bottom: 12px; }
+        .wallet-card { background: #1e1e24; border: 1px solid #f39c12; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+        .balance-usd { font-size: 28px; font-weight: bold; color: #fff; }
+        .balance-btc { font-size: 16px; color: #f39c12; margin-top: 8px; }
+        label { display: block; margin-top: 12px; margin-bottom: 6px; font-size: 14px; }
+        input { width: 100%; padding: 12px; background: #1e1e24; border: 1px solid #27272a; color: #fff; border-radius: 6px; box-sizing: border-box; margin-bottom: 12px; }
+        button { width: 100%; padding: 14px; background: #f39c12; color: #000; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <h2>
-        <span>geno.iafuturecoded</span>
-        <a href="/logout" class="logout-btn">Salir</a>
-    </h2>
+    <h2>geno.iafuturecoded</h2>
 
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <div class="flash-messages">
-          {% for message in messages %}
-            {{ message }}
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
-
-    <div class="section-title">Tesorería del Sistema (BTC)</div>
+    <div class="section-title">Tesorería Activa</div>
     <div class="wallet-card">
-        <div style="font-size: 12px; color: #a1a1aa;">Fondo de Acumulación Reservado</div>
-        <div class="balance-usd">${{ "{:,.2f}".format(usd_totales) }} USD</div>
-        <div class="balance-btc">₿ {{ "{:.6f}".format(btc_simulados) }} BTC</div>
-        <div style="font-size: 11px; color: #71717a; margin-bottom: 4px;">Dirección de Respaldo:</div>
-        <div class="wallet-address">{{ direccion_btc }}</div>
+        <div class="balance-usd">${{ crypto.usd }} USD</div>
+        <div class="balance-btc">₿ {{ crypto.btc }} BTC</div>
     </div>
 
-    <div class="section-title">Núcleo de Minería Eastside</div>
-    <form action="/minar" method="POST">
-        <label for="zona">Seleccionar Zona de Extracción:</label>
-        <select name="zona" id="zona">
-            <option value="Bellevue">Bellevue (Business & Wealth)</option>
-            <option value="Redmond">Redmond (Tech & Estates)</option>
-            <option value="Kirkland">Kirkland (Waterfront & Dev)</option>
-            <option value="Seattle">Seattle (Core)</option>
-        </select>
-        <button type="submit" class="btn-mine">Lanzar Robot de Extracción</button>
+    <div class="section-title">Ingresar Nuevos Datos</div>
+    <form action="/registrar_ingreso" method="POST">
+        <label>Concepto del Trabajo:</label>
+        <input type="text" name="concepto" placeholder="Ej. Lawn Master Servicio" required>
+        
+        <label>Monto en Dólares ($):</label>
+        <input type="number" step="0.01" name="monto_usd" placeholder="0.00">
+
+        <label>Monto en Bitcoin (₿):</label>
+        <input type="number" step="0.000001" name="monto_btc" placeholder="0.000000">
+        
+        <button type="submit">Guardar en Base de Datos</button>
     </form>
 </div>
-
 </body>
 </html>
