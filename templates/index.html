@@ -13,8 +13,10 @@
         .balance-usd { font-size: 28px; font-weight: bold; color: #fff; }
         .balance-btc { font-size: 16px; color: #f39c12; margin-top: 8px; }
         label { display: block; margin-top: 12px; margin-bottom: 6px; font-size: 14px; }
-        input { width: 100%; padding: 12px; background: #1e1e24; border: 1px solid #27272a; color: #fff; border-radius: 6px; box-sizing: border-box; margin-bottom: 12px; }
+        input, textarea { width: 100%; padding: 12px; background: #1e1e24; border: 1px solid #27272a; color: #fff; border-radius: 6px; box-sizing: border-box; margin-bottom: 12px; }
+        textarea { resize: none; height: 70px; font-family: sans-serif; }
         button { width: 100%; padding: 14px; background: #f39c12; color: #000; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .ai-response { display: none; margin-top: 12px; padding: 12px; background: #1a1a1e; border-left: 3px solid #f39c12; border-radius: 4px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -27,7 +29,18 @@
         <div class="balance-btc">₿ {{ crypto.btc }} BTC</div>
     </div>
 
-    <div class="section-title">Ingresar Nuevos Datos</div>
+    <div class="section-title">Interactuar con Gen3AI</div>
+    <form id="ai-form">
+        <label>Comando o Consulta de Voz/Texto:</label>
+        <textarea id="ai-mensaje" placeholder="Ej: Geno, registré un trabajo de $120..."></textarea>
+        <button type="submit" style="background-color: #e4e4e7; color: #000; margin-bottom: 10px;">Procesar con IA</button>
+    </form>
+    <div id="ai-respuesta" class="ai-response">
+        <strong style="color: #f39c12;">Gen3AI responde:</strong>
+        <p id="respuesta-texto" style="margin: 6px 0 0 0; line-height: 1.4;"></p>
+    </div>
+
+    <div class="section-title">Ingresar Nuevos Datos Manuales</div>
     <form action="/registrar_ingreso" method="POST">
         <label>Concepto del Trabajo:</label>
         <input type="text" name="concepto" placeholder="Ej. Lawn Master Servicio" required>
@@ -41,5 +54,33 @@
         <button type="submit">Guardar en Base de Datos</button>
     </form>
 </div>
+
+<script>
+document.getElementById('ai-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const mensajeInput = document.getElementById('ai-mensaje');
+    const respuestaDiv = document.getElementById('ai-respuesta');
+    const respuestaTexto = document.getElementById('respuesta-texto');
+    
+    if (!mensajeInput.value.trim()) return;
+    
+    respuestaTexto.innerText = "Gen3AI está procesando tu comando...";
+    respuestaDiv.style.display = "block";
+    
+    const formData = new FormData();
+    formData.append('mensaje', mensajeInput.value);
+    
+    try {
+        const response = await fetch('/preguntar_geno', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        respuestaTexto.innerText = data.respuesta;
+    } catch (error) {
+        respuestaTexto.innerText = "Error crítico de enlace con Gen3AI.";
+    }
+});
+</script>
 </body>
 </html>
