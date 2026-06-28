@@ -2,29 +2,36 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import os
 import sys
 import json
-import psycopg2 # Librería oficial para PostgreSQL
-from psycopg2.extras import RealDictCursor
+import pg8000  # Cambiamos la librería problemática por pg8000 nativo
 
 app = Flask(__name__)
 
 app.secret_key = os.environ.get('GENO_SYSTEM_SECRET', 'geno_secret_key_pro_2026')
 
-# --- CONEXIÓN DE BASE DE DATOS OPTIMIZADA ---
+# --- CONEXIÓN OPTIMIZADA CON PG8000 ---
 def obtener_conexion():
     DATABASE_URL = os.environ.get('DATABASE_URL')
     if DATABASE_URL:
-        return psycopg2.connect(DATABASE_URL, sslmode='require')
+        try:
+            # Limpiar el prefijo si Render lo envía con postgresql://
+            url = DATABASE_URL.replace("postgres://", "").replace("postgresql://", "")
+            user_pass, host_db = url.split("@")
+            user, password = user_pass.split(":")
+            host_port, database = host_db.split("/")
+            host = host_port.split(":")[0]
+            port = int(host_port.split(":")[1]) if ":" in host_port else 5432
+            
+            return pg8000.connect(user=user, password=password, host=host, port=port, database=database)
+        except Exception as e:
+            raise Exception(f"Error al procesar la DATABASE_URL: {e}")
     else:
-        EXTERNAL_URL = os.environ.get('EXTERNAL_DATABASE_URL')
-        if EXTERNAL_URL:
-            return psycopg2.connect(EXTERNAL_URL)
         raise Exception("Falta configurar la URL de la base de datos PostgreSQL en las variables de entorno.")
 
 def init_geno_system():
     conn = obtener_conexion()
     cursor = conn.cursor()
     
-    # Crear tablas con sintaxis PostgreSQL corregida por el equipo
+    # Crear tablas con sintaxis PostgreSQL corregida
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS notas_conexion (
             id SERIAL PRIMARY KEY,
@@ -77,9 +84,10 @@ def registrar_ingreso():
         
         conn = obtener_conexion()
         cursor = conn.cursor()
+        # pg8000 usa marcadores de posición posicionales (:1, :2) en lugar de %s
         cursor.execute("""
             UPDATE finanzas_sistema 
-            SET btc_balance = btc_balance + %s, usd_balance = usd_balance + %s 
+            SET btc_balance = btc_balance + :1, usd_balance = usd_balance + :2 
             WHERE id = 1
         """, (monto_btc, monto_usd))
         conn.commit()
@@ -129,9 +137,10 @@ def preguntar_geno():
         if monto_usd > 0 or monto_btc > 0:
             conn = obtener_conexion()
             cursor = conn.cursor()
+            # Adaptación de marcadores (:1, :2) para pg8000
             cursor.execute("""
                 UPDATE finanzas_sistema 
-                SET btc_balance = btc_balance + %s, usd_balance = usd_balance + %s 
+                SET btc_balance = btc_balance + :1, usd_balance = usd_balance + :2 
                 WHERE id = 1
             """, (monto_btc, monto_usd))
             conn.commit()
