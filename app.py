@@ -7,18 +7,13 @@ app = Flask(__name__)
 
 app.secret_key = os.environ.get('GENO_SYSTEM_SECRET', 'geno_secret_key_pro_2026')
 
-# --- PARCHE DE SEGURIDAD PARA RENDER ---
-# Si detecta que está en Render, usa la carpeta /tmp donde sí hay permisos de escritura
+# Parche de permisos de escritura para Render
 if os.environ.get('RENDER'):
     DB_PATH = '/tmp/database.db'
 else:
     DB_PATH = os.path.join(os.path.dirname(__file__), 'database.db')
 
-CONTRASEÑA_REAL = os.environ.get('GENO_MASTER_PASSWORD', '1234')
-CONTRASEÑA_MAESTRA_HASH = generate_password_hash(CONTRASEÑA_REAL)
-
 def init_geno_system(reset=False):
-    """Limpia los datos de prueba y arranca la base de datos vacía"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
@@ -57,14 +52,14 @@ def obtener_finanzas():
     res = cursor.fetchone()
     conn.close()
     if res:
+        # Mantiene exactamente el diccionario que tu HTML espera recibir
         return {'btc': f"{res[0]:.6f}", 'usd': f"{res[1]:,.2f}"}
     return {'btc': "0.000000", 'usd': "0.00"}
 
-# --- RUTA RAÍZ CORREGIDA ---
-# Apunta a 'login.html' que es el archivo real que tienes en tu carpeta templates
 @app.route('/', methods=['GET', 'POST'])
 def dashboard():
     crypto_data = obtener_finanzas()
+    # Mapea 'crypto' exactamente como lo tenías para index.html o login.html
     return render_template('login.html', crypto=crypto_data)
 
 @app.route('/registrar_ingreso', methods=['POST'])
@@ -74,21 +69,17 @@ def registrar_ingreso():
     
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
     cursor.execute("""
         UPDATE finanzas_sistema 
         SET btc_balance = btc_balance + ?, usd_balance = usd_balance + ? 
         WHERE id = 1
     """, (monto_btc, monto_usd))
-    
     conn.commit()
     conn.close()
     return redirect(url_for('dashboard'))
 
-# Inicializar la base de datos fuera del __main__ para que Gunicorn (Render) también la cree
+# Asegurar la creación de la BD en producción
 init_geno_system(reset=False)
 
 if __name__ == '__main__':
-    # Solo resetea localmente si ejecutas directamente con python app.py
-    init_geno_system(reset=True)
     app.run(host='0.0.0.0', port=5000, debug=True)
